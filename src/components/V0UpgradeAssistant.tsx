@@ -39,6 +39,26 @@ export default function V0UpgradeAssistant() {
 
   const upgrades: UpgradeItem[] = [
     {
+      id: 'refined_card_headers',
+      title: 'Refined Card Headers & Premium Layout',
+      category: 'PREMIUM CORE DESIGN SYSTEM',
+      description: 'Upgraded Venue Information card with dedicated control actions (Edit Identity, Discard, Save Changes) and Operating Schedule with its own actions (Edit Schedule, Discard, and Save & Sync) styled with an interactive animated gradient.',
+      prompt: 'Refine Card Headers: Separate Venue Information and Operating Schedule into different cards with dedicated control actions and interactive gradient layout.',
+      timestamp: 'Just Deployed Live',
+      benefits: [
+        'Dedicated Store icon badge with custom gold padding for Venue Info',
+        'Interactive animated gradient with hover scaling and pulse for Save & Sync button',
+        'Strict separation into two distinct visual cards on the discovery dashboard',
+        'Safe state restore and cloud-synced status validations'
+      ],
+      v0Reply: `Premium UI Upgrades applied successfully!
+Decoupled Operating Hours and Venue Identity cards fully.
+Enhanced headers with bespoke icon badges (Store, Clock) and micro-interactions.
+Save & Sync action features an interactive high-contrast gradient transition: bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600.`,
+      icon: <Sparkles className="w-5 h-5 text-kava-gold" />,
+      color: 'from-emerald-500/10 via-teal-500/5 to-emerald-500/10 text-emerald-400 border-emerald-500/30'
+    },
+    {
       id: 'github_vercel_sync',
       title: 'GitHub Repo & Vercel Web Sync',
       category: 'CI/CD ARCHITECTURE',

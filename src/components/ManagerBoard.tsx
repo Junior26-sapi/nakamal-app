@@ -1630,24 +1630,47 @@ export default function ManagerBoard({ user, onUpdateUser, onLogout }: ManagerBo
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* Venue Information */}
           <section className="kava-card space-y-8 transition-colors">
-          <div className="flex justify-between items-center">
-            <h3 className="font-bebas text-4xl text-kava-text uppercase tracking-wider">Venue Information</h3>
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/40 pb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-kava-gold/15 rounded-2xl text-kava-gold shadow-sm">
+                <Store size={24} />
+              </div>
+              <div>
+                <h3 className="font-bebas text-4xl text-kava-text uppercase tracking-wider leading-none">Venue Information</h3>
+                <p className="text-[8px] font-black text-kava-muted/40 uppercase tracking-widest mt-1">Configure your identity on the discovery engine</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
               {isEditingInfo && (
                 <button 
+                  type="button"
                   onClick={() => {
-                    setTempBar(bar);
-                    setTagsInput(bar?.tags.join(', ') || '');
+                    if (bar) {
+                      setTempBar(bar);
+                      setTagsInput(bar.tags.join(', ') || '');
+                    }
                     setIsEditingInfo(false);
                   }}
-                  className="px-6 py-3 bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all font-bold text-xs uppercase tracking-widest"
+                  className="px-5 py-3 bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all font-bold text-xs uppercase tracking-widest active:scale-95 cursor-pointer shadow-sm"
                 >
                   Discard
                 </button>
               )}
               <button 
-                onClick={() => isEditingInfo ? saveInfo() : setIsEditingInfo(true)}
-                className="flex items-center gap-2 px-6 py-3 bg-white/50 text-kava-muted rounded-2xl hover:bg-kava-gold hover:text-white transition-all font-bold text-xs uppercase tracking-widest"
+                type="button"
+                onClick={async () => {
+                  if (isEditingInfo) {
+                    await saveInfo();
+                  } else {
+                    setIsEditingInfo(true);
+                  }
+                }}
+                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all cursor-pointer shadow-sm ${
+                  isEditingInfo
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/10'
+                    : 'bg-white/50 text-kava-muted hover:bg-kava-gold hover:text-white'
+                }`}
               >
                 {isEditingInfo ? <Save size={16} /> : <Edit3 size={16} />}
                 {isEditingInfo ? 'Save Changes' : 'Edit Identity'}
@@ -1864,18 +1887,18 @@ export default function ManagerBoard({ user, onUpdateUser, onLogout }: ManagerBo
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* Operating Schedule - Separate Clean Card */}
         <section className="kava-card space-y-8 transition-colors flex flex-col justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/40 pb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-kava-gold/10 rounded-xl text-kava-gold">
-                <Clock size={20} />
+              <div className="p-2.5 bg-kava-gold/15 rounded-2xl text-kava-gold shadow-sm">
+                <Clock size={24} />
               </div>
               <div>
-                <h4 className="font-bebas text-3xl text-kava-text tracking-wider uppercase leading-none">Operating Schedule</h4>
+                <h4 className="font-bebas text-4xl text-kava-text uppercase tracking-wider leading-none">Operating Schedule</h4>
                 <p className="text-[8px] font-black text-kava-muted/40 uppercase tracking-widest mt-1">Automatic sync across all navigation nodes</p>
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               {isEditingSchedule && (
                 <button 
                   type="button"
@@ -1885,7 +1908,7 @@ export default function ManagerBoard({ user, onUpdateUser, onLogout }: ManagerBo
                     }
                     setIsEditingSchedule(false);
                   }}
-                  className="px-6 py-3 bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all font-bold text-xs uppercase tracking-widest"
+                  className="px-5 py-3 bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all font-bold text-xs uppercase tracking-widest active:scale-95 cursor-pointer shadow-sm"
                 >
                   Discard
                 </button>
@@ -1903,9 +1926,9 @@ export default function ManagerBoard({ user, onUpdateUser, onLogout }: ManagerBo
                   }
                 }}
                 disabled={isSyncingHours}
-                className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
+                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all cursor-pointer shadow-sm ${
                   isEditingSchedule 
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-md active:scale-95' 
+                    ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 bg-[length:200%_auto] hover:bg-right hover:scale-[1.02] active:scale-95 text-white shadow-lg shadow-emerald-500/20' 
                     : 'bg-white/50 text-kava-muted hover:bg-kava-gold hover:text-white'
                 }`}
               >
