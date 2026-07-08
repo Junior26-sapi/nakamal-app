@@ -57,6 +57,7 @@ export default function ManagerBoard({ user, onUpdateUser, onLogout }: ManagerBo
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [updates, setUpdates] = useState<BarUpdate[]>([]);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [isEditingSchedule, setIsEditingSchedule] = useState(false);
   const [isEditingMapLocation, setIsEditingMapLocation] = useState(false);
   const [tempBar, setTempBar] = useState<Bar | null>(null);
   const [tagsInput, setTagsInput] = useState('');
@@ -1874,16 +1875,39 @@ export default function ManagerBoard({ user, onUpdateUser, onLogout }: ManagerBo
               </div>
             </div>
 
-            {isEditingInfo && (
-              <button
+            <div className="flex gap-2">
+              {isEditingSchedule && (
+                <button 
+                  type="button"
+                  onClick={() => {
+                    if (bar?.businessHours) {
+                      setTempBar(prev => prev ? { ...prev, businessHours: bar.businessHours } : null);
+                    }
+                    setIsEditingSchedule(false);
+                  }}
+                  className="px-6 py-3 bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all font-bold text-xs uppercase tracking-widest"
+                >
+                  Discard
+                </button>
+              )}
+              <button 
                 type="button"
                 onClick={async () => {
-                  if (tempBar?.businessHours) {
-                    await persistBusinessHours(tempBar.businessHours);
+                  if (isEditingSchedule) {
+                    if (tempBar?.businessHours) {
+                      await persistBusinessHours(tempBar.businessHours);
+                    }
+                    setIsEditingSchedule(false);
+                  } else {
+                    setIsEditingSchedule(true);
                   }
                 }}
                 disabled={isSyncingHours}
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bebas text-sm uppercase tracking-wider rounded-full transition-all shadow-md active:scale-95 disabled:opacity-50"
+                className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
+                  isEditingSchedule 
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-md active:scale-95' 
+                    : 'bg-white/50 text-kava-muted hover:bg-kava-gold hover:text-white'
+                }`}
               >
                 {isSyncingHours ? (
                   <>
@@ -1892,22 +1916,22 @@ export default function ManagerBoard({ user, onUpdateUser, onLogout }: ManagerBo
                   </>
                 ) : hoursSyncSuccess ? (
                   <>
-                    <CheckCircle size={14} className="text-white" />
+                    <CheckCircle size={16} className="text-white" />
                     <span>Cloud Synced!</span>
                   </>
                 ) : (
                   <>
-                    <Save size={14} />
-                    <span>Sync Operating Times</span>
+                    {isEditingSchedule ? <Save size={16} /> : <Edit3 size={16} />}
+                    {isEditingSchedule ? 'Save & Sync' : 'Edit Schedule'}
                   </>
                 )}
               </button>
-            )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
             {DAYS.map(day => {
-              const dayData = tempBar.businessHours?.[day] || { open: '09:00', close: '22:00', closed: false };
+              const dayData = tempBar?.businessHours?.[day] || { open: '09:00', close: '22:00', closed: false };
               return (
                 <motion.div 
                   key={day} 
@@ -1935,11 +1959,13 @@ export default function ManagerBoard({ user, onUpdateUser, onLogout }: ManagerBo
                           <label className="text-[8px] font-black text-kava-muted/40 uppercase mb-1">Open</label>
                           <input 
                             type="time"
-                            disabled={!isEditingInfo}
+                            disabled={!isEditingSchedule}
                             value={dayData.open}
                             onChange={(e) => {
-                              const newHours = { ...tempBar.businessHours, [day]: { ...dayData, open: e.target.value } };
-                              setTempBar({ ...tempBar, businessHours: newHours });
+                              if (tempBar) {
+                                const newHours = { ...tempBar.businessHours, [day]: { ...dayData, open: e.target.value } };
+                                setTempBar({ ...tempBar, businessHours: newHours });
+                              }
                             }}
                             className="bg-transparent border-none text-sm font-bebas text-kava-gold focus:ring-0 p-0"
                           />
@@ -1949,11 +1975,13 @@ export default function ManagerBoard({ user, onUpdateUser, onLogout }: ManagerBo
                           <label className="text-[8px] font-black text-kava-muted/40 uppercase mb-1">Close</label>
                           <input 
                             type="time"
-                            disabled={!isEditingInfo}
+                            disabled={!isEditingSchedule}
                             value={dayData.close}
                             onChange={(e) => {
-                              const newHours = { ...tempBar.businessHours, [day]: { ...dayData, close: e.target.value } };
-                              setTempBar({ ...tempBar, businessHours: newHours });
+                              if (tempBar) {
+                                const newHours = { ...tempBar.businessHours, [day]: { ...dayData, close: e.target.value } };
+                                setTempBar({ ...tempBar, businessHours: newHours });
+                              }
                             }}
                             className="bg-transparent border-none text-sm font-bebas text-kava-gold focus:ring-0 p-0"
                           />
@@ -1967,10 +1995,12 @@ export default function ManagerBoard({ user, onUpdateUser, onLogout }: ManagerBo
 
                     <button
                       type="button"
-                      disabled={!isEditingInfo}
+                      disabled={!isEditingSchedule}
                       onClick={() => {
-                        const newHours = { ...tempBar.businessHours, [day]: { ...dayData, closed: !dayData.closed } };
-                        setTempBar({ ...tempBar, businessHours: newHours });
+                        if (tempBar) {
+                          const newHours = { ...tempBar.businessHours, [day]: { ...dayData, closed: !dayData.closed } };
+                          setTempBar({ ...tempBar, businessHours: newHours });
+                        }
                       }}
                       className={`p-3.5 rounded-2xl transition-all shadow-md active:scale-90 ${
                         dayData.closed 
