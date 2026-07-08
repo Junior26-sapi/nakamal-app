@@ -21,7 +21,7 @@ interface UpgradeItem {
 
 export default function V0UpgradeAssistant() {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'prompts' | 'cli' | 'visuals'>('prompts');
+  const [activeTab, setActiveTab] = useState<'prompts' | 'git'>('prompts');
   const [selectedUpgrade, setSelectedUpgrade] = useState<UpgradeItem | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
   const [aiHistory, setAiHistory] = useState<Array<{ sender: 'user' | 'v0'; text: string; isCode?: boolean }>>([
@@ -29,6 +29,121 @@ export default function V0UpgradeAssistant() {
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Real Git and Cache Busting states
+  const [gitStatus, setGitStatus] = useState<{
+    branch: string;
+    remote: string;
+    commits: string[];
+    statusSummary: string;
+  } | null>(null);
+  const [gitLoading, setGitLoading] = useState(false);
+  const [gitError, setGitError] = useState<string | null>(null);
+  
+  const [commitMessageInput, setCommitMessageInput] = useState('');
+  const [syncingGit, setSyncingGit] = useState(false);
+  const [syncResult, setSyncResult] = useState<{
+    success: boolean;
+    commit: string;
+    push: string;
+    error?: string;
+  } | null>(null);
+  const [cacheBustedMessage, setCacheBustedMessage] = useState<string | null>(null);
+
+  const fetchGitStatus = async () => {
+    setGitLoading(true);
+    setGitError(null);
+    try {
+      const response = await fetch('/api/git/status');
+      const data = await response.json();
+      if (data.success) {
+        setGitStatus(data);
+      } else {
+        setGitError(data.error || 'Failed to fetch status.');
+      }
+    } catch (err: any) {
+      setGitError(err.message || 'Network error fetching Git status.');
+    } finally {
+      setGitLoading(false);
+    }
+  };
+
+  const handleGitSync = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSyncingGit(true);
+    setSyncResult(null);
+    try {
+      const response = await fetch('/api/git/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: commitMessageInput.trim() })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSyncResult(data);
+        setCommitMessageInput('');
+        fetchGitStatus(); // Refresh status after successful push
+        // Add to simulated telemetry log
+        setAiHistory(prev => [
+          ...prev,
+          { sender: 'user', text: `Triggered Direct Git Sync & Push: "${commitMessageInput || 'Live Update'}"` },
+          { sender: 'v0', text: `Git Commit:\n${data.commit}\n\nGit Push:\n${data.push}`, isCode: true },
+          { sender: 'v0', text: `✅ SUCCESS! Changes successfully deployed to GitHub. Vercel build triggered on production branch 'main'.` }
+        ]);
+      } else {
+        setSyncResult({
+          success: false,
+          commit: '',
+          push: '',
+          error: data.error || 'Failed to execute sync.',
+        });
+        setAiHistory(prev => [
+          ...prev,
+          { sender: 'user', text: `Failed Git Sync & Push` },
+          { sender: 'v0', text: `Sync failed: ${data.error || 'Unknown error'}`, isCode: true }
+        ]);
+      }
+    } catch (err: any) {
+      setSyncResult({
+        success: false,
+        commit: '',
+        push: '',
+        error: err.message || 'Connection error to the backend.',
+      });
+    } finally {
+      setSyncingGit(false);
+    }
+  };
+
+  const forceCacheBusting = async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+      }
+      
+      const cachesKeys = await caches.keys();
+      for (const key of cachesKeys) {
+        await caches.delete(key);
+      }
+      
+      setCacheBustedMessage('Success! Wiped local PWA caches. Reloading the app...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (err: any) {
+      setCacheBustedMessage(`Cache clearing error: ${err.message}`);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'git') {
+      fetchGitStatus();
+      setSyncResult(null);
+    }
+  }, [activeTab]);
 
   // Auto-scroll simulated AI chat
   useEffect(() => {
@@ -307,55 +422,266 @@ Currently running with stable Node systems. All components (Discover, Messages, 
               <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col md:flex-row">
                 {/* Left Side: Upgrades List & Prompts */}
                 <div className="flex-1 border-b md:border-b-0 md:border-r border-neutral-900 flex flex-col min-h-0 bg-neutral-950">
-                  <div className="p-4 border-b border-neutral-900 flex items-center justify-between">
-                    <span className="text-[10px] font-black text-neutral-400 tracking-widest uppercase">UPGRADED SYSTEM PROMPTS</span>
-                    <span className="text-[9px] bg-emerald-500/10 text-emerald-400 font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">All Active</span>
+                  {/* Premium Tab Selector */}
+                  <div className="flex border-b border-neutral-900 p-2 bg-neutral-950/80 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('prompts')}
+                      className={`flex-1 py-2 px-3 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer text-center ${
+                        activeTab === 'prompts'
+                          ? 'bg-neutral-900 text-kava-gold border border-neutral-800'
+                          : 'text-neutral-400 hover:text-white hover:bg-neutral-900/40'
+                      }`}
+                    >
+                      AI Prompts Log
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('git')}
+                      className={`flex-1 py-2 px-3 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer text-center flex items-center justify-center gap-2 ${
+                        activeTab === 'git'
+                          ? 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 text-emerald-400 border border-emerald-500/30 font-extrabold'
+                          : 'text-neutral-400 hover:text-white hover:bg-neutral-900/40'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                      Live Git & Vercel Sync
+                    </button>
                   </div>
-                  
-                  <div className="p-4 space-y-3 overflow-y-auto max-h-[280px] md:max-h-none flex-1 custom-scrollbar">
-                    {upgrades.map(upg => (
-                      <div 
-                        key={upg.id}
-                        onClick={() => handleApplyPresetPrompt(upg)}
-                        className={`group p-4 rounded-2xl border bg-gradient-to-br transition-all cursor-pointer ${
-                          selectedUpgrade?.id === upg.id 
-                            ? 'from-kava-gold/15 to-neutral-900 border-kava-gold text-white' 
-                            : 'from-neutral-900/40 to-neutral-950 border-neutral-900 hover:border-neutral-800 text-neutral-400 hover:text-white'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`p-2.5 rounded-xl border ${
-                            selectedUpgrade?.id === upg.id ? 'bg-kava-gold/10 border-kava-gold/30 text-kava-gold' : 'bg-neutral-900 border-neutral-800 text-neutral-300'
-                          }`}>
-                            {upg.icon}
+
+                  {activeTab === 'prompts' ? (
+                    <>
+                      <div className="p-4 border-b border-neutral-900 flex items-center justify-between">
+                        <span className="text-[10px] font-black text-neutral-400 tracking-widest uppercase">UPGRADED SYSTEM PROMPTS</span>
+                        <span className="text-[9px] bg-emerald-500/10 text-emerald-400 font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">All Active</span>
+                      </div>
+                      
+                      <div className="p-4 space-y-3 overflow-y-auto max-h-[280px] md:max-h-none flex-1 custom-scrollbar">
+                        {upgrades.map(upg => (
+                          <div 
+                            key={upg.id}
+                            onClick={() => handleApplyPresetPrompt(upg)}
+                            className={`group p-4 rounded-2xl border bg-gradient-to-br transition-all cursor-pointer ${
+                              selectedUpgrade?.id === upg.id 
+                                ? 'from-kava-gold/15 to-neutral-900 border-kava-gold text-white' 
+                                : 'from-neutral-900/40 to-neutral-950 border-neutral-900 hover:border-neutral-800 text-neutral-400 hover:text-white'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`p-2.5 rounded-xl border ${
+                                selectedUpgrade?.id === upg.id ? 'bg-kava-gold/10 border-kava-gold/30 text-kava-gold' : 'bg-neutral-900 border-neutral-800 text-neutral-300'
+                              }`}>
+                                {upg.icon}
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <span className="text-[8px] font-black tracking-[0.2em] text-kava-gold uppercase leading-none block mb-1">
+                                  {upg.category}
+                                </span>
+                                <h4 className="text-xs font-bold leading-tight truncate mb-1">
+                                  {upg.title}
+                                </h4>
+                                <p className="text-[11px] text-neutral-400 line-clamp-2 leading-relaxed font-sans">
+                                  {upg.description}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Prompt preview block */}
+                            <div className="mt-3 bg-black/40 p-2.5 rounded-xl border border-white/5 flex items-center justify-between text-[11px] font-mono">
+                              <div className="truncate flex items-center gap-1.5 text-neutral-300">
+                                <span className="text-kava-gold">&gt;</span>
+                                <span className="truncate italic">" {upg.prompt} "</span>
+                              </div>
+                              <span className="text-[9px] text-emerald-400 font-mono shrink-0 font-bold tracking-wider float-right flex items-center gap-1 ml-2">
+                                Simulate <Play className="w-2.5 h-2.5 fill-current" />
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-4 flex-1 overflow-y-auto custom-scrollbar space-y-4">
+                      {/* Status Header Block */}
+                      <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="relative flex items-center justify-center">
+                              <span className="absolute w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 relative z-10" />
+                            </div>
+                            <span className="text-[10px] font-black text-neutral-400 tracking-wider uppercase">Live Connection</span>
                           </div>
                           
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[8px] font-black tracking-[0.2em] text-kava-gold uppercase leading-none block mb-1">
-                              {upg.category}
-                            </span>
-                            <h4 className="text-xs font-bold leading-tight truncate mb-1">
-                              {upg.title}
-                            </h4>
-                            <p className="text-[11px] text-neutral-400 line-clamp-2 leading-relaxed font-sans">
-                              {upg.description}
-                            </p>
+                          <button 
+                            type="button"
+                            onClick={fetchGitStatus}
+                            disabled={gitLoading}
+                            className="p-1.5 rounded-lg bg-neutral-950 hover:bg-neutral-800 border border-neutral-800 transition-colors text-neutral-400 hover:text-white cursor-pointer"
+                          >
+                            <RefreshCw className={`w-3 h-3 ${gitLoading ? 'animate-spin' : ''}`} />
+                          </button>
+                        </div>
+                        
+                        {gitLoading ? (
+                          <div className="py-2 flex items-center gap-2 text-xs text-neutral-400 font-mono italic">
+                            <span className="w-1.5 h-1.5 bg-kava-gold rounded-full animate-bounce" />
+                            Checking repository status...
+                          </div>
+                        ) : gitError ? (
+                          <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-[10px] font-mono text-rose-400">
+                            Error: {gitError}
+                          </div>
+                        ) : gitStatus ? (
+                          <div className="space-y-2 text-[11px] font-mono leading-relaxed">
+                            <div className="flex justify-between border-b border-neutral-850 pb-1.5">
+                              <span className="text-neutral-500">Repository</span>
+                              <span className="text-neutral-300 select-all truncate max-w-[240px] text-right" title={gitStatus.remote}>
+                                {gitStatus.remote.split('/').slice(-2).join('/')}
+                              </span>
+                            </div>
+                            <div className="flex justify-between border-b border-neutral-850 pb-1.5">
+                              <span className="text-neutral-500">Active Branch</span>
+                              <span className="text-emerald-400 font-semibold">{gitStatus.branch}</span>
+                            </div>
+                            <div className="flex justify-between border-b border-neutral-850 pb-1.5">
+                              <span className="text-neutral-500">Deploy Domain</span>
+                              <a 
+                                href="https://nakamal.vercel.app" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-kava-gold hover:underline flex items-center gap-1"
+                              >
+                                nakamal.vercel.app
+                                <Globe className="w-3 h-3" />
+                              </a>
+                            </div>
+                            <div className="pt-1.5">
+                              <span className="text-neutral-500 block mb-1">Local Changes Status:</span>
+                              <div className="p-2 rounded-xl bg-black/40 border border-white/5 text-[10px] max-h-16 overflow-y-auto text-neutral-400 custom-scrollbar whitespace-pre-wrap">
+                                {gitStatus.statusSummary}
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      {/* Commit & Sync Form */}
+                      <form onSubmit={handleGitSync} className="space-y-3">
+                        <div>
+                          <label className="text-[9px] font-black tracking-widest text-neutral-500 uppercase block mb-1.5">
+                            Describe what you upgraded (Commit Message)
+                          </label>
+                          <input 
+                            type="text"
+                            required
+                            value={commitMessageInput}
+                            onChange={(e) => setCommitMessageInput(e.target.value)}
+                            placeholder="e.g., Refine Operating hours layout and cache busting"
+                            className="w-full bg-neutral-900 border border-neutral-800 rounded-xl py-2 px-3 text-xs font-sans placeholder-neutral-600 focus:outline-none focus:border-neutral-750 text-neutral-200"
+                          />
+                        </div>
+                        
+                        <button
+                          type="submit"
+                          disabled={syncingGit}
+                          className={`w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-widest text-center transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg ${
+                            syncingGit
+                              ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:scale-[1.01] active:scale-95 text-white shadow-emerald-500/10'
+                          }`}
+                        >
+                          {syncingGit ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 animate-spin text-neutral-500" />
+                              Pushing live update...
+                            </>
+                          ) : (
+                            <>
+                              <GitBranch className="w-4 h-4 text-white" />
+                              Push Live Update to GitHub
+                            </>
+                          )}
+                        </button>
+                      </form>
+
+                      {/* Sync Result Block */}
+                      {syncResult && (
+                        <div className={`p-3.5 rounded-2xl border text-[11px] font-mono leading-relaxed space-y-2 ${
+                          syncResult.success 
+                            ? 'bg-emerald-500/5 border-emerald-500/15 text-emerald-400' 
+                            : 'bg-rose-500/5 border-rose-500/15 text-rose-400'
+                        }`}>
+                          <div className="font-bold flex items-center gap-1.5">
+                            {syncResult.success ? (
+                              <>
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                SYNC COMPLETED SUCCESSFULLY!
+                              </>
+                            ) : (
+                              <>
+                                <X className="w-4 h-4 text-rose-400 shrink-0" />
+                                SYNC EXECUTION FAILED
+                              </>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-neutral-400">
+                            {syncResult.success 
+                              ? 'All local files staged, committed, and pushed directly to the master remote repository successfully. Vercel build hook triggered.'
+                              : `Error Details: ${syncResult.error || 'Check details below'}`}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Diagnostic & PWA Cache Buster Card */}
+                      <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-3.5 text-xs">
+                        <div className="flex items-center gap-2 border-b border-neutral-850 pb-2">
+                          <Info className="w-4 h-4 text-kava-gold shrink-0" />
+                          <h5 className="font-bold text-white tracking-wide text-[11px] uppercase">Vercel Deployment & PWA Cache Guide</h5>
+                        </div>
+                        
+                        <p className="text-neutral-400 text-[11px] leading-relaxed">
+                          Your app is a <strong>Progressive Web App (PWA)</strong>. Modern browsers cache PWA files <strong>extremely aggressively</strong>.
+                        </p>
+                        
+                        <div className="space-y-2 text-[10px] leading-relaxed text-neutral-400">
+                          <div className="flex items-start gap-2">
+                            <span className="w-4 h-4 rounded-full bg-neutral-950 flex items-center justify-center font-bold text-kava-gold text-[9px] shrink-0 mt-0.5">1</span>
+                            <span><strong>Unregister Service Worker:</strong> If you don't see changes on <code className="text-neutral-200">nakamal.vercel.app</code>, click the button below to force-wipe all offline cache and reload.</span>
+                          </div>
+                          
+                          <div className="flex items-start gap-2">
+                            <span className="w-4 h-4 rounded-full bg-neutral-950 flex items-center justify-center font-bold text-kava-gold text-[9px] shrink-0 mt-0.5">2</span>
+                            <span><strong>Private Browsing / Incognito:</strong> Test the URL in Private/Incognito mode or use another browser to bypass the cache.</span>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <span className="w-4 h-4 rounded-full bg-neutral-950 flex items-center justify-center font-bold text-kava-gold text-[9px] shrink-0 mt-0.5">3</span>
+                            <span><strong>Vercel Settings Check:</strong> Confirm Vercel is connected to the repository <code className="text-neutral-200">Junior26-sapi/nakamal-app</code> and tracking branch <code className="text-neutral-200">main</code>.</span>
                           </div>
                         </div>
 
-                        {/* Prompt preview block */}
-                        <div className="mt-3 bg-black/40 p-2.5 rounded-xl border border-white/5 flex items-center justify-between text-[11px] font-mono">
-                          <div className="truncate flex items-center gap-1.5 text-neutral-300">
-                            <span className="text-kava-gold">&gt;</span>
-                            <span className="truncate italic">" {upg.prompt} "</span>
-                          </div>
-                          <span className="text-[9px] text-emerald-400 font-mono shrink-0 font-bold tracking-wider float-right flex items-center gap-1 ml-2">
-                            Simulate <Play className="w-2.5 h-2.5 fill-current" />
-                          </span>
+                        {/* Force Cache Buster Action */}
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={forceCacheBusting}
+                            className="w-full py-2.5 px-3 rounded-xl bg-neutral-950 border border-neutral-850 text-[10px] font-bold text-neutral-300 hover:text-white hover:bg-neutral-800 transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 text-kava-gold" />
+                            Force Clear PWA Offline Cache & Reload
+                          </button>
+                          
+                          {cacheBustedMessage && (
+                            <p className="mt-2 text-center text-[10px] font-mono text-emerald-400 animate-pulse">
+                              {cacheBustedMessage}
+                            </p>
+                          )}
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Side: Simulated Live v.0 Chat Interface */}

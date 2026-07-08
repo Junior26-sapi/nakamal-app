@@ -1,11 +1,10 @@
 // Service Worker for Nakamal Venue Management Offline Notification System
 
-const CACHE_NAME = 'nakamal-v3';
+const CACHE_NAME = 'nakamal-v4';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
-  '/icon.png',
-  '/sw.js'
+  '/icon.png'
 ];
 
 // Pre-cache core structural assets during installation

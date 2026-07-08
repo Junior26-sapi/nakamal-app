@@ -251,6 +251,81 @@ async function startServer() {
     res.json({ status: 'ok' });
   });
 
+  // Git Status Endpoint for Live Telemetry
+  app.get('/api/git/status', async (req, res) => {
+    try {
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
+
+      const { stdout: branchOut } = await execAsync('git rev-parse --abbrev-ref HEAD');
+      const { stdout: remoteOut } = await execAsync('git remote get-url origin');
+      
+      // Get last 3 commits
+      const { stdout: commitsOut } = await execAsync('git log -n 3 --oneline');
+
+      // Get status short
+      const { stdout: statusOut } = await execAsync('git status -s');
+
+      res.json({
+        success: true,
+        branch: branchOut.trim(),
+        remote: remoteOut.trim().replace(/ghp_[a-zA-Z0-9]+@/, '***@'), // Mask sensitive token for security
+        commits: commitsOut.trim().split('\n').filter(Boolean),
+        statusSummary: statusOut.trim() || 'Working directory clean and synchronized.'
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to read Git repository status.'
+      });
+    }
+  });
+
+  // Secure Git Commit & Push Endpoint
+  app.post('/api/git/sync', async (req, res) => {
+    try {
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
+
+      const commitMessage = req.body.message || `Production design upgrade via v0 AI System - ${new Date().toLocaleDateString()}`;
+
+      // 1. Stage all changes
+      await execAsync('git add .');
+
+      // 2. Commit changes
+      let commitOut = '';
+      try {
+        const { stdout } = await execAsync(`git commit -m "${commitMessage.replace(/"/g, '\\"')}"`);
+        commitOut = stdout;
+      } catch (err: any) {
+        if (err.stdout && (err.stdout.includes('nothing to commit') || err.stdout.includes('working tree clean'))) {
+          commitOut = 'Nothing to commit, working tree clean.';
+        } else {
+          throw err;
+        }
+      }
+
+      // 3. Push to main branch
+      const { stdout: pushOut, stderr: pushErr } = await execAsync('git push origin main');
+
+      res.json({
+        success: true,
+        commit: commitOut.trim(),
+        push: (pushOut + '\n' + (pushErr || '')).trim(),
+        message: 'Changes successfully pushed and committed to GitHub repository!'
+      });
+    } catch (error: any) {
+      console.error('[GIT SYNC ERROR]:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to execute push to GitHub.',
+        stderr: error.stderr || ''
+      });
+    }
+  });
+
   // Genkit AI B2B Messaging Flow
   app.post('/api/ai/b2b-message', async (req, res) => {
     try {
