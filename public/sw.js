@@ -1,6 +1,6 @@
 // Service Worker for Nakamal Venue Management Offline Notification System
 
-const CACHE_NAME = 'nakamal-v2';
+const CACHE_NAME = 'nakamal-v3';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
