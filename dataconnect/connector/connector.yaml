@@ -1,0 +1,5 @@
+connectorId: "nakamal-connector"
+generate:
+  javascriptSdk:
+    outputDir: "../src/lib/dataconnect"
+    package: "@nakamal/dataconnect"

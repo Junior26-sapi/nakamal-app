@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

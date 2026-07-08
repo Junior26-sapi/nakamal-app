@@ -1,0 +1,28 @@
+query ListBars @auth(level: PUBLIC) {
+  bars(orderBy: [{ name: ASC }]) {
+    id
+    name
+    category
+    address
+    lat
+    lng
+    status
+    manager {
+      id
+      name
+    }
+  }
+}
+
+query GetMessages($chatId: String!) @auth(level: USER) {
+  messages(where: { chatId: { eq: $chatId }}, orderBy: [{ timestamp: ASC }]) {
+    id
+    text
+    timestamp
+    sender {
+      id
+      name
+    }
+    readBy
+  }
+}

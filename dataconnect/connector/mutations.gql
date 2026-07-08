@@ -1,0 +1,11 @@
+mutation CreateMessage($chatId: String!, $text: String!) @auth(level: USER) {
+  message_insert(data: {
+    chatId: $chatId,
+    text: $text,
+    sender: { id_expr: "auth.uid" }
+  })
+}
+
+mutation UpdateBarStatus($id: String!, $status: String!) @auth(level: USER) {
+  bar_update(id: $id, data: { status: $status })
+}

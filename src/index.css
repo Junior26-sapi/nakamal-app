@@ -1,0 +1,523 @@
+@import url('https://fonts.googleapis.com/css2?family=Tangerine:wght@400;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&family=Bebas+Neue&display=swap');
+@import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+:root {
+  --color-kava-bg: #f7ede0;
+  --color-kava-surface: rgba(245, 222, 179, 0.85);
+  --color-kava-gold: #e6a017;
+  --color-kava-text: #3b2a1f;
+  --color-kava-muted: #6b4e2e;
+}
+
+.dark {
+  --color-kava-bg: #1a1614;
+  --color-kava-surface: rgba(46, 38, 33, 0.85);
+  --color-kava-gold: #f5b22b;
+  --color-kava-text: #f7ede0;
+  --color-kava-muted: #a57c5c;
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-bebas: "Bebas Neue", sans-serif;
+  --font-tangerine: "Tangerine", cursive;
+  
+  --color-kava-bg: var(--color-kava-bg);
+  --color-kava-surface: var(--color-kava-surface);
+  --color-kava-gold: var(--color-kava-gold);
+  --color-kava-text: var(--color-kava-text);
+  --color-kava-muted: var(--color-kava-muted);
+}
+
+body {
+  background-color: var(--color-kava-bg);
+  color: var(--color-kava-text);
+  font-family: var(--font-sans);
+  transition: background-color 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              background-image 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              color 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kava-pattern {
+  position: relative;
+}
+
+.kava-pattern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60"><path d="M15 25 Q15 45 30 45 Q45 45 45 25" fill="none" stroke="%23a57c5c" stroke-width="1.5" opacity="0.12"/><path d="M18 27 Q18 42 30 42 Q42 42 42 27" fill="%23d4b08c" fill-opacity="0.08" stroke="%238b6946" stroke-width="1" opacity="0.15"/><path d="M28 22 L32 22 L31 25 L29 25 Z" fill="%236b4e2e" fill-opacity="0.1"/><circle cx="30" cy="28" r="8" fill="%23e6a017" fill-opacity="0.05" stroke="%23e6a017" stroke-width="0.8" opacity="0.15"/><path d="M24 28 L36 28" stroke="%23e6a017" stroke-width="0.8" opacity="0.12"/></svg>'), repeating-linear-gradient(45deg, rgba(210,170,120,0.08) 0px, rgba(210,170,120,0.08) 2px, transparent 2px, transparent 8px);
+  background-repeat: repeat;
+  background-size: 80px 80px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.dark .kava-pattern::before {
+  opacity: 0.15;
+  filter: invert(1) brightness(0.5);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-kava-gold);
+  border-radius: 10px;
+  opacity: 0.3;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-kava-muted);
+}
+
+/* Enhanced UI Styles */
+.kava-card {
+  border-radius: 28px;
+  padding: 1.75rem;
+  background: var(--color-kava-surface);
+  backdrop-filter: blur(24px);
+  border: 2.5px solid #ffffff; /* Solid white border as requested */
+  
+  /* Multi-layered centered floating shadow */
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.45),
+    0 16px 45px -12px rgba(90, 60, 40, 0.16),
+    0 24px 55px -15px rgba(0, 0, 0, 0.22),
+    0 8px 18px -6px rgba(0, 0, 0, 0.12),
+    0 0 45px -5px rgba(0, 0, 0, 0.05),
+    inset 0 1.5px 3px rgba(255, 255, 255, 0.55);
+    
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.5s ease,
+              background-color 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              background-image 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  isolation: isolate;
+  transform: perspective(1000px) rotateX(1.5deg) rotateY(-0.75deg) translateZ(0);
+}
+
+.kava-card:hover {
+  transform: perspective(1000px) rotateX(3.5deg) rotateY(-1.5deg) translateZ(12px) translateY(-12px) scale(1.025);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.65),
+    0 35px 85px -20px rgba(90, 60, 40, 0.22),
+    0 40px 90px -25px rgba(0, 0, 0, 0.38),
+    0 20px 40px -15px rgba(0, 0, 0, 0.2),
+    0 0 65px -5px rgba(0, 0, 0, 0.08),
+    inset 0 2px 4px rgba(255, 255, 255, 0.75);
+}
+
+.dark .kava-card {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 25px 65px -15px rgba(0, 0, 0, 0.62),
+    0 12px 30px -10px rgba(0, 0, 0, 0.45),
+    0 0 50px -5px rgba(0, 0, 0, 0.25),
+    inset 0 1px 2px rgba(255, 255, 255, 0.04);
+}
+
+.dark .kava-card:hover {
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 45px 105px -18px rgba(0, 0, 0, 0.78),
+    0 30px 48px -15px rgba(0, 0, 0, 0.48),
+    0 0 70px -5px rgba(0, 0, 0, 0.35),
+    inset 0 1.5px 3px rgba(255, 255, 255, 0.08);
+}
+
+button {
+  transition: transform 0.08s linear, all 0.2s ease-in-out;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+.kava-button {
+  transition: transform 0.08s linear, all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+.kava-button:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.kava-button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* Keep original colors – just add transitions */
+.message {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.message-new {
+  animation: slideFade 0.2s ease-out;
+}
+@keyframes slideFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.badge-unread {
+  animation: gentlePulse 2s infinite;
+}
+@keyframes gentlePulse {
+  0% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.7; transform: scale(1); }
+}
+
+.typing-dots span {
+  display: inline-block;
+  animation: blink 1.4s infinite both;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink {
+  0%, 60%, 100% { opacity: 0.4; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+
+.notification-toast {
+  transition: opacity 0.25s, transform 0.2s;
+}
+.notification-toast.hide {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+/* Generic hover transitions for interactive elements */
+a, 
+input, 
+textarea, 
+.interactive-element {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Premium Advanced Glassmorphic Aesthetic Class */
+.kava-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 4px 30px rgba(0, 0, 0, 0.03),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.dark .kava-glass {
+  background: rgba(20, 16, 14, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Multilayered box shadow depths */
+.kava-shadow-layered {
+  box-shadow: 
+    0 1px 1px rgba(0,0,0,0.02),
+    0 2px 2px rgba(0,0,0,0.02),
+    0 4px 4px rgba(0,0,0,0.02),
+    0 8px 8px rgba(0,0,0,0.02),
+    0 16px 16px rgba(0,0,0,0.02);
+}
+
+.dark .kava-shadow-layered {
+  box-shadow: 
+    0 1px 2px rgba(0,0,0,0.1),
+    0 4px 8px rgba(0,0,0,0.15),
+    0 12px 24px rgba(0,0,0,0.25),
+    0 32px 64px rgba(0,0,0,0.3);
+}
+
+/* Advanced Holographic Glassmorphism */
+.kava-holographic-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    0 8px 32px 0 rgba(230, 160, 23, 0.06),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.2);
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.dark .kava-holographic-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(46, 38, 33, 0.35) 0%,
+    rgba(20, 16, 14, 0.6) 100%
+  );
+  border: 1.5px solid rgba(245, 178, 43, 0.15);
+  box-shadow: 
+    0 12px 40px 0 rgba(0, 0, 0, 0.35),
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.05);
+}
+
+.kava-holographic-glass:hover {
+  transform: scale(1.015) translateY(-6px);
+  border-color: rgba(230, 160, 23, 0.4);
+  box-shadow: 
+    0 25px 50px -10px rgba(230, 160, 23, 0.2),
+    0 8px 24px -12px rgba(230, 160, 23, 0.15),
+    inset 0 1px 2.5px rgba(255, 255, 255, 0.35);
+}
+
+.dark .kava-holographic-glass:hover {
+  border-color: rgba(245, 178, 43, 0.4);
+  box-shadow: 
+    0 25px 50px -10px rgba(245, 178, 43, 0.2),
+    0 8px 24px -12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.1);
+}
+
+/* Shimmer keyframes for skeletons & loading states */
+@keyframes kava-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.kava-shimmer-bg {
+  background: linear-gradient(90deg, rgba(230,160,23,0.05) 25%, rgba(230,160,23,0.12) 50%, rgba(230,160,23,0.05) 75%);
+  background-size: 200% 100%;
+  animation: kava-shimmer 1.8s infinite linear;
+}
+
+.dark .kava-shimmer-bg {
+  background: linear-gradient(90deg, rgba(46, 38, 33, 0.2) 25%, rgba(46, 38, 33, 0.5) 50%, rgba(46, 38, 33, 0.2) 75%);
+  background-size: 200% 100%;
+  animation: kava-shimmer 1.8s infinite linear;
+}
+
+/* Custom Traditional Island Wood Theme Overrides */
+.theme-wood {
+  --island-bg: #1e120a;
+  --wood-dark: #3a2214;
+  --wood-medium: #54341e;
+  --wood-light: #7c4e32;
+  --parchment: #f0dec5;
+  --parchment-dark: #d9c3a3;
+  --accent-green: #597d39;
+  --text-dark: #2b180d;
+  --text-light: #fbf6f0;
+  --border-radius: 14px;
+
+  /* Map core context variables */
+  --color-kava-bg: var(--island-bg);
+  --color-kava-surface: rgba(58, 34, 20, 0.9);
+  --color-kava-gold: var(--parchment);
+  --color-kava-text: var(--text-light);
+  --color-kava-muted: var(--parchment-dark);
+}
+
+/* Wood specific body background using linear-gradient on top of beach backdrop */
+.theme-wood body {
+  background: linear-gradient(rgba(30, 18, 10, 0.4), rgba(30, 18, 10, 0.8)), 
+              url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed !important;
+  background-size: cover !important;
+  color: var(--text-light) !important;
+}
+
+/* Authentic island carving motif pattern overlay */
+.theme-wood .kava-pattern::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><path d="M0 0 L30 30 L60 0 M0 60 L30 30 L60 60" stroke="%233a2214" stroke-width="2" fill="none" opacity="0.3"/><path d="M15 15 L30 30 L45 15 M15 45 L30 30 L45 45" stroke="%2354341e" stroke-width="1.2" fill="none" opacity="0.2"/></svg>');
+  background-repeat: repeat;
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.3 !important;
+}
+
+/* Wood panel cards override - Exact styles from .wood-panel */
+.theme-wood .kava-card,
+.theme-wood .bg-kava-surface,
+.theme-wood .bg-white\/45,
+.theme-wood .bg-white\/80,
+.theme-wood .bg-neutral-900\/50,
+.theme-wood .bg-neutral-900\/35 {
+  background: linear-gradient(145deg, var(--wood-medium), var(--wood-dark)) !important;
+  border: 3px solid var(--wood-light) !important;
+  border-radius: var(--border-radius) !important;
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5), 4px 4px 10px rgba(0,0,0,0.3) !important;
+  color: var(--text-light) !important;
+  border-image: none !important;
+}
+
+/* Inside Content Cards - Exact Parchment Texture Style */
+.theme-wood .parchment-styled,
+.theme-wood .parchment-card,
+.theme-wood .bg-neutral-50,
+.theme-wood .bg-amber-500\/10,
+.theme-wood .bg-white {
+  background-color: var(--parchment) !important;
+  color: var(--text-dark) !important;
+  border-radius: calc(var(--border-radius) - 4px) !important;
+  border: 1px solid var(--parchment-dark) !important;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.15), 2px 2px 5px rgba(0,0,0,0.2) !important;
+  background-image: none !important;
+}
+
+/* Fix text colors for child elements on Parchment cards */
+.theme-wood .parchment-styled *,
+.theme-wood .parchment-card *,
+.theme-wood .bg-neutral-50 *,
+.theme-wood .bg-white * {
+  color: var(--text-dark) !important;
+}
+
+/* Fix neutral subtexts on parchment cards to be dark sepia ink */
+.theme-wood .parchment-styled .text-neutral-500,
+.theme-wood .parchment-styled .text-kava-muted,
+.theme-wood .parchment-card .text-neutral-500,
+.theme-wood .parchment-card .text-kava-muted {
+  color: #54341e !important;
+}
+
+/* Custom Form Controls inputs */
+.theme-wood input, 
+.theme-wood textarea, 
+.theme-wood select {
+  width: 100% !important;
+  background-color: var(--parchment) !important;
+  border: 2px solid var(--wood-medium) !important;
+  border-radius: 6px !important;
+  color: var(--text-dark) !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+}
+
+.theme-wood input::placeholder, 
+.theme-wood textarea::placeholder {
+  color: rgba(43, 24, 13, 0.5) !important;
+}
+
+/* Wood Headings styling with shadows */
+.theme-wood h1, 
+.theme-wood h2, 
+.theme-wood h3, 
+.theme-wood h4, 
+.theme-wood h5, 
+.theme-wood h6 {
+  color: var(--parchment) !important;
+  text-shadow: 2px 2px var(--island-bg) !important;
+}
+
+/* Subtext colors */
+.theme-wood .text-neutral-400,
+.theme-wood .text-neutral-500,
+.theme-wood .text-neutral-600,
+.theme-wood .text-neutral-700,
+.theme-wood .text-kava-muted,
+.theme-wood .text-kava-text {
+  color: var(--parchment-dark) !important;
+}
+
+/* Island Utility Buttons - Exact .btn-action styles */
+.theme-wood .btn-action,
+.theme-wood button.bg-kava-gold,
+.theme-wood button.bg-emerald-600,
+.theme-wood button.bg-\[\#e6a017\],
+.theme-wood button.bg-\[var\(--color-kava-gold\)\] {
+  background: linear-gradient(to bottom, var(--wood-light), var(--wood-medium)) !important;
+  color: var(--parchment) !important;
+  border: 2px solid var(--wood-dark) !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  transition: all 0.2s ease !important;
+  text-shadow: 1px 1px 2px black !important;
+  box-shadow: none !important;
+}
+
+.theme-wood .btn-action:hover,
+.theme-wood button.bg-kava-gold:hover,
+.theme-wood button.bg-emerald-600:hover,
+.theme-wood button.bg-\[var\(--color-kava-gold\)\]:hover {
+  filter: brightness(1.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Active navigation highlighted state */
+.theme-wood .bg-kava-gold\/15,
+.theme-wood .bg-kava-text\/5 {
+  background-color: var(--wood-medium) !important;
+  border: 1px solid var(--wood-light) !important;
+}
+
+/* Nakamal Header Theme style */
+.theme-wood header#app-header {
+  background-color: var(--wood-dark) !important;
+  border-bottom: 4px solid var(--wood-medium) !important;
+}
+
+.theme-wood header#app-header * {
+  color: var(--parchment) !important;
+  text-shadow: 2px 2px var(--island-bg) !important;
+}
+
+.theme-wood header#app-header p {
+  color: var(--accent-green) !important;
+  font-weight: bold !important;
+}
+
+/* Premium Liquid-smooth View Transition Animations for Theme Switching */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.7s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::view-transition-old(root) {
+  animation-name: custom-fade-out;
+}
+
+::view-transition-new(root) {
+  animation-name: custom-fade-in;
+}
+
+@keyframes custom-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes custom-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
+
+

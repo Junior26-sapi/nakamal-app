@@ -1,0 +1,8 @@
+{
+  "appId": "com.nakamal.app",
+  "appName": "Nakamal App",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

@@ -1,0 +1,35 @@
+# schema.gql for NAKAMAL Ecosystem
+
+# User Profile table
+type User @table {
+  id: String! @primaryKey
+  email: String! @unique
+  name: String!
+  role: String! # admin, manager, supplier
+  avatarUrl: String
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Kava Bar / Venue table
+type Bar @table {
+  id: String! @primaryKey
+  name: String!
+  category: String!
+  address: String!
+  description: String
+  lat: Float!
+  lng: Float!
+  status: String! @default(value: "closed")
+  manager: User! @ref
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Message table for real-time B2B
+type Message @table {
+  id: UUID! @default(expr: "uuidV4()")
+  chatId: String! @index
+  sender: User! @ref
+  text: String!
+  timestamp: Timestamp! @default(expr: "request.time")
+  readBy: [String]! @default(value: [])
+}

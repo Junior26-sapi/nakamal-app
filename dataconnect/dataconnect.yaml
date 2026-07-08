@@ -1,0 +1,10 @@
+specVersion: "v1"
+serviceId: "nakamal-ecosystem"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "nakamal_db"
+      realtimeUpdates: ENABLED
+connectorDirs: ["./connector"]

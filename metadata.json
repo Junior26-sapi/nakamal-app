@@ -1,0 +1,6 @@
+{
+  "name": "NAKAMAL – Administrative Ecosystem",
+  "description": "A high-end management platform for kava bars, managers, and suppliers featuring real-time state controls, inventory management, and B2B messaging.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
