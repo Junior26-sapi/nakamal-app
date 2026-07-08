@@ -1,6 +1,6 @@
 // Service Worker for Nakamal Venue Management Offline Notification System
 
-const CACHE_NAME = 'nakamal-v4';
+const CACHE_NAME = 'nakamal-v5';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -33,7 +33,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Smart fetch interception with offline-first support for assets and bypass for APIs
+// Smart fetch interception with Network-First navigation caching to ensure instant production updates
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -42,10 +42,32 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const isNavigate = event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html';
+
+  if (isNavigate) {
+    // Network-First strategy for page navigation / index.html to avoid cached stale code on updates
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // If offline, serve the latest cached index.html
+          return caches.match('/index.html') || caches.match('/');
+        })
+    );
+    return;
+  }
+
+  // Stale-While-Revalidate strategy for static assets (js, css, images, fonts)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Fetch fresh copy in the background to update cache for next load (Stale-While-Revalidate)
+        // Fetch fresh copy in the background to update cache for next load
         fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
@@ -61,18 +83,13 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         }
 
-        // Cache newly retrieved client assets or third parity assets like Fonts dynamically
+        // Cache newly retrieved client assets dynamically
         const responseToCache = networkResponse.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseToCache);
         });
 
         return networkResponse;
-      }).catch(() => {
-        // If entirely offline and it's a page navigation request, return default index.html fallback
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
       });
     })
   );
