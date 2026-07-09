@@ -3405,7 +3405,7 @@ export default function SupplierBoard({ user, onUpdateUser, onLogout }: Supplier
                       </label>
                       
                       {/* Integrated Interactive map for seamless visual location pin dropped registration */}
-                      <div className="w-full h-[220px] rounded-3xl overflow-hidden border border-white/10 shadow-lg relative bg-[#f6f2ee] mb-4">
+                      <div className="w-full h-[400px] rounded-3xl overflow-hidden border border-white/10 shadow-lg relative bg-[#f6f2ee] mb-4">
                         <BusinessMap 
                           center={{ lat: Number(profileForm.locationLat) || -17.7333, lng: Number(profileForm.locationLng) || 168.3167 }} 
                           title={profileForm.name || "My Operations Hub"} 

@@ -61,6 +61,9 @@ export default function BusinessMap({ center, title, address, isEditable = false
     });
     map.current = mapInstance;
 
+    // Add standard zoom and navigation controls
+    mapInstance.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
     // Fast resize on load and style load
     mapInstance.on('load', () => {
       mapInstance.resize();
@@ -148,12 +151,19 @@ export default function BusinessMap({ center, title, address, isEditable = false
     if (isEditable) {
       setShowAIPrompter(true);
     }
+    // Resize map when edit state toggles to align canvas
+    if (map.current) {
+      map.current.resize();
+    }
   }, [isEditable]);
 
   // Update marker and center when props change
   useEffect(() => {
     if (!map.current || !marker.current) return;
     
+    // Explicitly trigger canvas recalculations to avoid clipping
+    map.current.resize();
+
     const lng = Number(center.lng);
     const lat = Number(center.lat);
     
