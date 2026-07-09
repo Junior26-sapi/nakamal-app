@@ -14,7 +14,6 @@ import SupplierBoard from './components/SupplierBoard';
 import ExporterBoard from './components/ExporterBoard';
 import Profile from './components/Profile';
 import Messages from './components/Messages';
-import V0UpgradeAssistant from './components/V0UpgradeAssistant';
 import { LogOut, LayoutDashboard, Compass, Lock, User as UserIcon, HelpCircle, Sun, Moon, MessageSquare, Globe, Coins, RefreshCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from './contexts/LanguageContext';
@@ -841,7 +840,6 @@ export default function App() {
           )}
         </main>
       </div>
-      <V0UpgradeAssistant />
       <PwaInstallPrompt />
       </>
     )}

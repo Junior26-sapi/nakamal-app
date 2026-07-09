@@ -595,6 +595,24 @@ textarea,
   -webkit-backface-visibility: hidden;
 }
 
+/* Hard block Vercel Developer Tools visually */
+vercel-developer-tools,
+#vercel-developer-tools,
+.vercel-developer-tools,
+[id*="vercel-developer-tools"],
+[id*="vercel-live-feedback"],
+vercel-live-feedback {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 
 
 
